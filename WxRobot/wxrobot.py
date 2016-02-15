@@ -122,8 +122,8 @@ class WxRobot(object):
                 print('[*] 群聊添加以下成员：')
                 for m in userNames:
                     print(self.api.getUserRemarkName(m))
-
-            time.sleep(INTERFACE_CALL_INTERVAL) #接口调用间隔时间
+            if group != groupCount - 1:
+                time.sleep(INTERFACE_CALL_INTERVAL) #接口调用间隔时间
 
         print('=======检测结束=========')
         print('由于微信接口限制，本功能将会有30分钟的技能冷却时间')
