@@ -59,6 +59,9 @@ class UnicodeStreamFilter:
         s = s.encode(self.encode_to, self.errors).decode(self.encode_to)
         self.target.write(s)
 
+    def flush(self):
+        self.target.flush()
+
 if sys.stdout.encoding == 'cp936':
     sys.stdout = UnicodeStreamFilter(sys.stdout)
 
