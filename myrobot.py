@@ -54,9 +54,7 @@ class UnicodeStreamFilter:
         self.encode_to = self.target.encoding
 
     def write(self, s):
-        if type(s) == str:
-            s = s.decode('utf-8')
-        s = s.encode(self.encode_to, self.errors).decode(self.encode_to)
+        s.encode(self.encode_to,self.errors).decode(self.encode_to)
         self.target.write(s)
 
     def flush(self):
