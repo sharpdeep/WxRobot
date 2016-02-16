@@ -7,11 +7,35 @@ import sys
 import functools
 import math
 import time
+import inspect
+import ssl
 
 from WxRobot.webwxapi import WebWxAPI
 
 MAX_GROUP_NUM = 35 #每组人数
 INTERFACE_CALL_INTERVAL = 60 #接口调用时间间隔
+
+# windows下编码问题修复
+# http://blog.csdn.net/heyuxuanzee/article/details/8442718
+
+
+class UnicodeStreamFilter:
+
+    def __init__(self, target):
+        self.target = target
+        self.encoding = 'utf-8'
+        self.errors = 'replace'
+        self.encode_to = self.target.encoding
+
+    def write(self, s):
+        s.encode(self.encode_to,self.errors).decode(self.encode_to)
+        self.target.write(s)
+
+    def flush(self):
+        self.target.flush()
+
+if sys.stdout.encoding == 'cp936':
+    sys.stdout = UnicodeStreamFilter(sys.stdout)
 
 def catchKeyboardInterrupt(fun):
     @functools.wraps(fun)
@@ -35,6 +59,7 @@ class WxRobot(object):
 
     @catchKeyboardInterrupt
     def start(self):
+        ssl._create_default_https_context = ssl._create_unverified_context
         print('[*] WxRobot ... start')
         self._run('[*] 获取uuid ... ', self.api.getUUID)
         print('[*] 生成二维码 ... 成功');
@@ -54,13 +79,29 @@ class WxRobot(object):
         self.listenLoop = multiprocessing.Process(target=self.api.listenMsgLoop,
                                              args=(self._onPhoneExit, self._onMsgReceive, self._onPhoneInteract,self._onIdle,self._onSyncError))
         self.listenLoop.start()
-
         while True:
-            command = input('')
-            response = self.commands.get(command.strip().lower())
-            if response is not None:
-                response[0]()
-            else:
+            commandline = input('> ').lower()
+            if len(commandline.strip()) == 0:
+                continue
+            command = commandline.split()[0]
+            args = commandline.split()[1:]
+            responses = self.commands.get(command)
+
+            command_exist = False
+            if responses is not None:
+                optional_response = []
+                for response in responses:
+                    argCount = response[2]
+                    if len(args) >= argCount:
+                        optional_response.append((response[2],response[0]))
+
+                if len(optional_response) > 0:
+                    optional_response.sort()
+                    optional_response[-1][1](*args[:argCount])
+                    command_exist = True
+
+
+            if not command_exist:
                 print('[*] 系统识别不了命令')
 
     def _logout(self):
@@ -69,11 +110,13 @@ class WxRobot(object):
         exit(0)
 
     def _print_help_msg(self):
-        msg = '==========================\n'
+        msg = '=================================================\n'
 
-        for command,response in self.commands.items():
-            msg = msg + command + ' --> ' + response[1] + '\n'
-        msg += '=========================='
+        for command,responses in self.commands.items():
+            for response in responses:
+                argCount = response[2]
+                msg = msg + command + '\t\t-->\t' + response[1] + '\n'
+        msg += '================================================='
 
         print(msg)
 
@@ -160,8 +203,21 @@ class WxRobot(object):
         sys.stdout.write(str)
         sys.stdout.flush()
 
+    def command(self,command,helpMsg = ''):
+        def wrapper(func):
+            self.addCommand(command,func,helpMsg)
+            return func
+        return wrapper
+
     def addCommand(self,command,func,helpMsg):
-        self.commands[command] = (func,helpMsg)
+        args = inspect.getargspec(func).args
+        argCount = len(args)
+        if 'self' in args:
+            argCount -= 1
+        if not self.commands.get(command):
+            self.commands[command] = []
+        self.commands[command].append((func,helpMsg,argCount))
+        # self.commands[command] = (func,helpMsg,argCount)
 
     def _onPhoneExit(self):
         pass

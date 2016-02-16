@@ -42,33 +42,19 @@ def onPhoneInteract():
 def onMsgReceive():
     pass
 
+@robot.command('test','test function')
+def test():
+    print('[*] test')
+
+@robot.command('send','send text msg:send [name] [msg]')
+def sendTextMsg(name,text):
+    print(api.getUserId(name))
+    api.sendTextMsg(name,text)
 
 @robot.onSyncError
 def onSyncError():
     print('[*] 查找同步线路失败')
     exit(0)
-
-# windows下编码问题修复
-# http://blog.csdn.net/heyuxuanzee/article/details/8442718
-
-
-class UnicodeStreamFilter:
-
-    def __init__(self, target):
-        self.target = target
-        self.encoding = 'utf-8'
-        self.errors = 'replace'
-        self.encode_to = self.target.encoding
-
-    def write(self, s):
-        s.encode(self.encode_to,self.errors).decode(self.encode_to)
-        self.target.write(s)
-
-    def flush(self):
-        self.target.flush()
-
-if sys.stdout.encoding == 'cp936':
-    sys.stdout = UnicodeStreamFilter(sys.stdout)
 
 if __name__ == '__main__':
     robot.start()

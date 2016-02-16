@@ -200,6 +200,45 @@ class WebWxAPI(object):
         # 群联系人(todo)
         return True
 
+    def webwxsendtextmsg(self,text,to = 'filehelper'):
+        url = self.base_uri + '/webwxsendmsg?pass_ticket=%s' % (self.pass_ticket)
+        clientMsgId = str(int(time.time()*1000)) + str(random.random())[:5].replace('.','')
+        params = {
+            'BaseRequest': self.BaseRequest,
+            'Msg': {
+                "Type": 1,
+                "Content": text,
+                "FromUserName": self.User['UserName'],
+                "ToUserName": to,
+                "LocalID": clientMsgId,
+                "ClientMsgId": clientMsgId
+            }
+        }
+        # headers = {'content-type': 'application/json; charset=UTF-8'}
+        # data = json.dumps(params, ensure_ascii=False).encode('utf8')
+        # r = requests.post(url, data = data, headers = headers)
+        # dic = r.json()
+        # return dic['BaseResponse']['Ret'] == 0
+        dic = self._post(url,params)
+        return dic['BaseResponse']['Ret'] == 0
+
+    def webwxgeticon(self,id):
+        url = self.base_uri + '/webwxgeticon?username=%s&skey=%s' % (id, self.skey)
+        data = self._get(url,byte_ret=True)
+        icon_path = os.path.join(os.getcwd(),'icon_'+id+'.jpg')
+        with open(icon_path,'wb') as f:
+            f.write(data)
+        return icon_path
+
+    def webwxgetheading(self,id):
+        url = self.base_uri + '/webwxgetheadimg?username=%s&skey=%s' % (id, self.skey)
+        data = self._get(url,byte_ret=True)
+        head_path = os.path.join(os.getcwd(),'head_'+id+'.jpg')
+        with open(head_path,'wb') as f:
+            f.write(data)
+        return head_path
+
+
     def testsynccheck(self):
         syncHost = [
             'webpush.weixin.qq.com',
@@ -251,6 +290,17 @@ class WebWxAPI(object):
             self.synckey = '|'.join([str(keyVal['Key']) + '_' + str(keyVal['Val']) for keyVal in self.SyncKey['List']])
         return dic
 
+    def sendTextMsg(self,name,text,isfile = False):
+        id = self.getUserId(name)
+        if id:
+            if self.webwxsendtextmsg(text,id):
+                return True,''
+            else:
+                return False,'api调用失败'
+        else:
+            return False,'用户不存在'
+
+
     def listenMsgLoop(self, onExit, onMsgReceive, onPhoneInteract,onIdle,onSyncError):
         # 测试同步线路
         if not self.testsynccheck():
@@ -297,6 +347,12 @@ class WebWxAPI(object):
                 name = member['RemarkName'] if member['RemarkName'] else member['NickName']
                 return name
         return name
+
+    def getUserId(self,name):
+        for member in self.MemberList:
+            if name == member['RemarkName'] or name == member['NickName']:
+                return member['UserName']
+        return None
 
     def createChatroom(self,userNames):
         memberList = [{'UserName':username} for username in userNames]
@@ -402,20 +458,24 @@ class WebWxAPI(object):
         for row in mat:
             print(''.join([BLACK if item else WHITE for item in row]))
 
-    def _get(self, url,encoding='utf-8'):
+    def _get(self, url,encoding='utf-8',byte_ret = False):
         req = request.Request(url)
         response = request.urlopen(req)
+        if byte_ret:
+            return response.read()
         data = response.read().decode(encoding)
         return data
 
-    def _post(self, url, params, jsonfmt=True,encoding='utf-8'):
+    def _post(self, url, params, jsonfmt=True,encoding='utf-8',byte_ret = False):
         if jsonfmt:
-            req = request.Request(url=url, data=json.dumps(params).encode('utf-8'))
+            req = request.Request(url=url, data=json.dumps(params,ensure_ascii=False).encode('utf-8'))
             req.add_header('ContentType', 'application/json; charset=UTF-8')
         else:
             req = request.Request(url=url, data=parse.urlencode(params).encode('utf-8'))
 
         response = request.urlopen(req)
+        if byte_ret:
+            return response.read()
         data = response.read().decode(encoding)
         return json.loads(data) if jsonfmt else data
 
