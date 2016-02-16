@@ -52,7 +52,7 @@ class WxRobot(object):
         self._print_help_msg()
 
         self.listenLoop = multiprocessing.Process(target=self.api.listenMsgLoop,
-                                             args=(self._onPhoneExit, self._onMsgReceive, self._onPhoneInteract,self._onIdle))
+                                             args=(self._onPhoneExit, self._onMsgReceive, self._onPhoneInteract,self._onIdle,self._onSyncError))
         self.listenLoop.start()
 
         while True:
@@ -65,7 +65,8 @@ class WxRobot(object):
 
     def _logout(self):
         self.listenLoop.terminate()
-        exit('[*] 退出微信')
+        print('[*] 退出微信')
+        exit(0)
 
     def _print_help_msg(self):
         msg = '==========================\n'
@@ -152,7 +153,8 @@ class WxRobot(object):
             self._echo('成功\n')
         else:
             self._echo(msg)
-            exit(msg + '\n[退出程序]')
+            print(msg + '\n[退出程序]')
+            exit(0)
 
     def _echo(self, str):
         sys.stdout.write(str)
@@ -173,6 +175,9 @@ class WxRobot(object):
     def _onIdle(self):
         pass
 
+    def _onSyncError(self):
+        pass
+
     def onMsgReceive(self,func):
         self._onMsgReceive = func
         return func
@@ -188,3 +193,6 @@ class WxRobot(object):
     def onIdle(self,func):
         self._onIdle = func
         return func
+
+    def onSyncError(self,func):
+        self._onSyncError = func

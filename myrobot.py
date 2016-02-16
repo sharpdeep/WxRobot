@@ -25,21 +25,28 @@ def FiltedTxtMsgHandler(message):
 def LocationMsgHandler(message):
     print('%s给你发了一个位置：[我在%s]'%(message.fromUserName,message.location))
 
-@api.initMsg
-def InitMsgHandler(message):
-    print('[*] 成功截获初始化信息')
-
 @robot.onPhoneExit
 def onPhoneExit():
-    exit('[*] 你在手机上登出了微信，再见')
+    print('[*] 你在手机上登出了微信，再见')
+    exit(0)
+
+interactCount = 0
 
 @robot.onPhoneInteract
 def onPhoneInteract():
-    print('[*] 你在手机上玩了微信被我发现了')
+    global interactCount
+    interactCount += 1
+    print('[*] 你在手机上玩了%d次微信被我发现了'%interactCount)
 
 @robot.onMsgReceive
 def onMsgReceive():
-    print('[*] 你有新消息')
+    pass
+
+
+@robot.onSyncError
+def onSyncError():
+    print('[*] 查找同步线路失败')
+    exit(0)
 
 # windows下编码问题修复
 # http://blog.csdn.net/heyuxuanzee/article/details/8442718

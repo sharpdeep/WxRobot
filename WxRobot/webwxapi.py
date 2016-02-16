@@ -201,9 +201,20 @@ class WebWxAPI(object):
         return True
 
     def testsynccheck(self):
-        for host in ['webpush', 'webpush2']:
+        syncHost = [
+            'webpush.weixin.qq.com',
+            'webpush1.weixin.qq.com',
+            'webpush2.weixin.qq.com',
+            'webpush.wechat.com',
+            'webpush1.wechat.com',
+            'webpush2.wechat.com',
+            'webpush1.wechatapp.com',
+        ]
+        for host in syncHost:
             self.syncHost = host
             [retcode, selector] = self.synccheck()
+            if self.DEBUG:
+                print('[*] test',host,'->',retcode)
             if retcode == '0': return True
         return False
 
@@ -217,7 +228,7 @@ class WebWxAPI(object):
             'synckey': self.synckey,
             '_': int(time.time()),
         }
-        url = 'https://' + self.syncHost + '.weixin.qq.com/cgi-bin/mmwebwx-bin/synccheck?' + parse.urlencode(params)
+        url = 'https://' + self.syncHost + '/cgi-bin/mmwebwx-bin/synccheck?' + parse.urlencode(params)
         data = self._get(url)
         pm = re.search(r'window.synccheck={retcode:"(\d+)",selector:"(\d+)"}', data)
         retcode = pm.group(1)
@@ -240,9 +251,10 @@ class WebWxAPI(object):
             self.synckey = '|'.join([str(keyVal['Key']) + '_' + str(keyVal['Val']) for keyVal in self.SyncKey['List']])
         return dic
 
-    def listenMsgLoop(self, onExit, onMsgReceive, onPhoneInteract,onIdle):
+    def listenMsgLoop(self, onExit, onMsgReceive, onPhoneInteract,onIdle,onSyncError):
         # 测试同步线路
-        self.testsynccheck()
+        if not self.testsynccheck():
+            onSyncError()
         while True:
             [retcode, selector] = self.synccheck()
             if retcode == '1100':
