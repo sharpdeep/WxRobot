@@ -9,8 +9,10 @@ import math
 import time
 import inspect
 import ssl
+import requests
 
 from WxRobot.webwxapi import WebWxAPI
+from WxRobot.reply import *
 
 MAX_GROUP_NUM = 35 #每组人数
 INTERFACE_CALL_INTERVAL = 60 #接口调用时间间隔
@@ -252,3 +254,48 @@ class WxRobot(object):
 
     def onSyncError(self,func):
         self._onSyncError = func
+        return func
+
+
+    #http://developer.simsimi.com/
+    def simsimi(self,message): #只有免费7天,不推荐
+        text = message.content
+        key = ''
+        url = url = 'http://sandbox.api.simsimi.com/request.p?key=%s&lc=ch&ft=0.0&text=%s' % (key, text)
+        response = requests.get(url)
+        data = response.json()
+        reply = data['response'] if data['result'] else '你说什么，风太大了听不清！'
+        return '[simsimi回复]'+reply
+
+    #http://www.tuling123.com/
+    def turing(self,message):
+        text = message.content
+        userid = message.fromUserId
+        key = ''
+        url = 'http://www.tuling123.com/openapi/api?key=%s&info=%s&userid=%s'%(key,text,userid)
+        response = requests.get(url)
+        data = response.json()
+        code = data['code']
+        print(data)
+        prefix = '[图灵机器人回复]'
+        if code == 100000: #文本回复
+            return TextReply(prefix + data['text'])
+        elif code == 200000: #链接回复
+            return TextReply(prefix + data['text'] + ',点击查看:' + data['url'])
+        elif code == 302000: #新闻回复
+            pass
+        elif code == 308000: #菜谱回复
+            pass
+        elif code == 40001: #key错误
+            pass
+        elif code == 40002: #info为空
+            pass
+        elif code == 40004: #当天请求次数已使用完
+            pass
+        elif code == 40007: #数据格式异常
+            pass
+        else:
+            return TextReply(prefix + '你说什么，风太大了听不清')
+        return TextReply(prefix + data['text'])
+
+

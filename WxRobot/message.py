@@ -20,6 +20,8 @@ class WeChatMessage(object):
     def __init__(self,message):
         self.fromUserName = message.pop('FromUserName',None)
         self.toUserName = message.pop('ToUserName',None)
+        self.fromUserId = message.pop('FromUserId',None)
+        self.toUserId = message.pop('ToUserId',None)
         self.msgId = message.pop('MsgId',0)
         self.createTime = message.pop('CreateTime',0)
         self.__dict__.update(message)

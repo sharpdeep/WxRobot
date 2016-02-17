@@ -12,13 +12,12 @@ import re
 import json
 import random,sys,os
 import subprocess
-from urllib import request, parse
-from http.cookiejar import CookieJar
-
 import qrcode
 from bs4 import BeautifulSoup
-
+from urllib import request, parse
+from http.cookiejar import CookieJar
 from WxRobot.message import MESSAGE_TYPES, UnKnownMessage
+from WxRobot.reply import WeChatReply,TextReply
 
 QRCODE_PATH = os.path.join(os.getcwd(), 'qrcode.jpg')
 
@@ -96,10 +95,12 @@ class WebWxAPI(object):
         return False
 
     def genQRCode(self):
-        # mat = self._str2QRMat('https://login.weixin.qq.com/l/' + self.uuid)
-        # self._printQR(mat)
-        self._genQRCodeImg()
-        self._safe_open(QRCODE_PATH)
+        if sys.platform.find('win') >= 0:
+            self._genQRCodeImg()
+            self._safe_open(QRCODE_PATH)
+        else:
+            mat = self._str2QRMat('https://login.weixin.qq.com/l/' + self.uuid)
+            self._printQR(mat)
 
     def waitForLogin(self, tip=1):
         data = self._get('https://login.weixin.qq.com/cgi-bin/mmwebwx-bin/login?tip=%s&uuid=%s&_=%s' % (
@@ -238,7 +239,6 @@ class WebWxAPI(object):
             f.write(data)
         return head_path
 
-
     def testsynccheck(self):
         syncHost = [
             'webpush.weixin.qq.com',
@@ -294,7 +294,7 @@ class WebWxAPI(object):
         id = self.getUserId(name)
         if id:
             if self.webwxsendtextmsg(text,id):
-                return True,''
+                return True,None
             else:
                 return False,'api调用失败'
         else:
@@ -333,7 +333,9 @@ class WebWxAPI(object):
                 if not is_match:
                     continue
                 args = [message, ][:args_count]
-                handler(*args)
+                reply = handler(*args)
+                if reply:
+                    self._process_reply(reply,message)
 
 
     def getUserRemarkName(self, id):
@@ -416,7 +418,9 @@ class WebWxAPI(object):
     def _process_message(self, message):
         message['type'] = self.message_types_dict.get(message.pop('MsgType'), None)
         message['FromUserName'] = self.getUserRemarkName(message.pop('FromUserName'))
+        message['FromUserId'] = self.getUserId(message['FromUserName'])
         message['ToUserName'] = self.getUserRemarkName(message.pop('ToUserName'))
+        message['ToUserId'] = self.getUserId(message['ToUserName'])
         message['Content'] = message.pop('Content').replace('<br/>', '\n').replace('&lt;', '<').replace('&gt;', '>')
 
         if message['type'] == 'text' and message['Content'].find(
@@ -428,6 +432,15 @@ class WebWxAPI(object):
 
         message_type = MESSAGE_TYPES.get(message['type'], UnKnownMessage)
         return message_type(message)
+
+    def _process_reply(self,reply,message):
+        if isinstance(reply,str):
+            self.sendTextMsg(message.fromUserName,reply)
+        elif isinstance(reply,WeChatReply):
+            if isinstance(reply,TextReply): #文本回复
+                self.sendTextMsg(message.fromUserName,reply.content)
+        else:
+            raise TypeError('your reply is a %s,reply should be str or WechatReply instance'%type(reply))
 
     def _str2QRMat(self, str):
         qr = qrcode.QRCode()
@@ -449,8 +462,6 @@ class WebWxAPI(object):
 
         with open(QRCODE_PATH,'wb') as f:
             f.write(data)
-
-
 
     def _printQR(self, mat):
         BLACK = '\033[40m  \033[0m'

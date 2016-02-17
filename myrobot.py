@@ -17,8 +17,10 @@ robot = WxRobot(api)
 @api.textMsg
 @api.sourceFilter('腾讯新闻',beside=True)
 def FiltedTxtMsgHandler(message):
-    print('%s给%s发送了一个消息'%(message.fromUserName,message.toUserName))
     print('-> %s:%s'%(message.fromUserName,message.content))
+    reply = robot.turing(message)
+    print('[*] 自动回复：%s'%reply)
+    return reply
 
 
 @api.location
@@ -46,7 +48,7 @@ def onMsgReceive():
 def test():
     print('[*] test')
 
-@robot.command('send','send text msg:send [name] [msg]')
+@robot.command('->','send text msg:send [name] [msg]')
 def sendTextMsg(name,text):
     print(api.getUserId(name))
     api.sendTextMsg(name,text)
