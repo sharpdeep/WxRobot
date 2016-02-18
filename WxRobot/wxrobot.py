@@ -3,13 +3,14 @@
 __author__ = 'sharpdeep'
 
 import multiprocessing
-import sys
+import sys,os
 import functools
 import math
 import time
 import inspect
 import ssl
 import requests
+import subprocess
 
 from WxRobot.webwxapi import WebWxAPI
 from WxRobot.reply import *
@@ -82,7 +83,7 @@ class WxRobot(object):
                                              args=(self._onPhoneExit, self._onMsgReceive, self._onPhoneInteract,self._onIdle,self._onSyncError))
         self.listenLoop.start()
         while True:
-            commandline = input('> ').lower()
+            commandline = input('').lower()
             if len(commandline.strip()) == 0:
                 continue
             command = commandline.split()[0]
@@ -256,9 +257,27 @@ class WxRobot(object):
         self._onSyncError = func
         return func
 
+    def open(self,path):
+        pattern = path[-3:]
+        if sys.platform.find('win') >= 0:
+            os.startfile(path)
+            return
+        if pattern == 'jpg':
+            r = self.api._safe_open(path)
+            if not r:
+                print('[*] 打开失败')
+        elif pattern == 'mp3':
+            subprocess.call(['mpg123',path])
+        elif pattern == 'mp4':
+            subprocess.call(['vlc',path])
+        else:
+            raise ValueError('the file format is wrong')
+
 
     #http://developer.simsimi.com/
     def simsimi(self,message): #只有免费7天,不推荐
+        if message.type != 'text':
+           raise ValueError('auto reply request text message')
         text = message.content
         key = ''
         url = url = 'http://sandbox.api.simsimi.com/request.p?key=%s&lc=ch&ft=0.0&text=%s' % (key, text)
@@ -269,6 +288,8 @@ class WxRobot(object):
 
     #http://www.tuling123.com/
     def turing(self,message):
+        if message.type != 'text':
+           raise ValueError('auto reply request text message')
         text = message.content
         userid = message.fromUserId
         key = ''
@@ -276,7 +297,6 @@ class WxRobot(object):
         response = requests.get(url)
         data = response.json()
         code = data['code']
-        print(data)
         prefix = '[图灵机器人回复]'
         if code == 100000: #文本回复
             return TextReply(prefix + data['text'])

@@ -25,10 +25,12 @@ class WebWxAPI(object):
     message_types_dict = {
         1: 'text',  # 文本消息
         3: 'image',  # 图片消息
-        34: 'audio',  # 语音消息
+        34: 'voice',  # 语音消息
+        42: 'recommend', #名片
         48: 'sharelocation',  # 位置共享
         51: 'initmsg',  # 微信初始化消息
         62: 'video',  # 小视频
+        10002: 'revoke', #撤回消息
     }
 
     message_types = message_types_dict.values()
@@ -239,6 +241,30 @@ class WebWxAPI(object):
             f.write(data)
         return head_path
 
+    def webwxgetmsgimg(self,msgid):
+        url = self.base_uri + '/webwxgetmsgimg?MsgID=%s&skey=%s' % (msgid, self.skey)
+        data = self._get(url,byte_ret=True)
+        msgimg_path = os.path.join(os.getcwd(),'msgimg_' + msgid + '.jpg')
+        with open(msgimg_path,'wb') as f:
+            f.write(data)
+        return msgimg_path
+
+    def webwxgetmsgvideo(self,msgid):
+        url = self.base_uri + '/webwxgetvideo?msgid=%s&skey=%s' % (msgid, self.skey)
+        data = self._get(url,byte_ret=True)
+        msgvideo_path = os.path.join(os.getcwd(),'msgvideo_'+msgid+'.mp4')
+        with open(msgvideo_path,'wb') as f:
+            f.write(data)
+        return msgvideo_path
+
+    def webwxgetmsgvoice(self,msgid):
+        url = self.base_uri + '/webwxgetvoice?msgid=%s&skey=%s' % (msgid, self.skey)
+        data = self._get(url,byte_ret=True)
+        msgvoice_path = os.path.join(os.getcwd(),'msgvoice_'+msgid+'.mp3')
+        with open(msgvoice_path,'wb') as f:
+            f.write(data)
+        return  msgvoice_path
+
     def testsynccheck(self):
         syncHost = [
             'webpush.weixin.qq.com',
@@ -299,6 +325,8 @@ class WebWxAPI(object):
                 return False,'api调用失败'
         else:
             return False,'用户不存在'
+
+
 
 
     def listenMsgLoop(self, onExit, onMsgReceive, onPhoneInteract,onIdle,onSyncError):
@@ -423,15 +451,16 @@ class WebWxAPI(object):
         message['ToUserId'] = self.getUserId(message['ToUserName'])
         message['Content'] = message.pop('Content').replace('<br/>', '\n').replace('&lt;', '<').replace('&gt;', '>')
 
-        if message['type'] == 'text' and message['Content'].find(
+        if message['type'] == 'text' and message['Content'].find( #位置消息
                 'http://weixin.qq.com/cgi-bin/redirectforward?args=') != -1:
             message['type'] = 'location'
             data = self._get(message['Content'],encoding='gbk')
             location = self._searchContent('title',data,fmat='xml')
             message['location'] = location
 
+
         message_type = MESSAGE_TYPES.get(message['type'], UnKnownMessage)
-        return message_type(message)
+        return message_type(self,message)
 
     def _process_reply(self,reply,message):
         if isinstance(reply,str):
@@ -536,8 +565,8 @@ class WebWxAPI(object):
         self.add_handler(func, type='video')
         return func
 
-    def audioMsg(self, func):
-        self.add_handler(func, type='audio')
+    def voiceMsg(self, func):
+        self.add_handler(func, type='voice')
         return func
 
     def sharelocation(self, func):
@@ -546,6 +575,14 @@ class WebWxAPI(object):
 
     def location(self, func):
         self.add_handler(func, type='location')
+        return func
+
+    def recommend(self,func):
+        self.add_handler(func,type='recommend')
+        return func
+
+    def revoke(self,func):
+        self.add_handler(func,type='revoke')
         return func
 
     def initMsg(self, func):
@@ -635,12 +672,16 @@ class WebWxAPI(object):
         return '未知'
 
     def _safe_open(self,file_path):
-        if sys.platform.find('darwin') >= 0:
-            subprocess.call(['open',file_path])
-        elif sys.platform.find('linux') >= 0:
-            subprocess.call(['xdg-open',file_path])
-        else:
-            os.startfile(file_path)
+        try:
+            if sys.platform.find('darwin') >= 0:
+                subprocess.call(['open',file_path])
+            elif sys.platform.find('linux') >= 0:
+                subprocess.call(['xdg-open',file_path])
+            else:
+                os.startfile(file_path)
+            return True
+        except:
+            return False
 
 specialUsers = ['newsapp', 'fmessage', 'filehelper', 'weibo', 'qqmail', 'fmessage', 'tmessage', 'qmessage',
                 'qqsync', 'floatbottle', 'lbsapp', 'shakeapp', 'medianote', 'qqfriend', 'readerapp', 'blogapp',

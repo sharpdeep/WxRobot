@@ -14,18 +14,48 @@ from WxRobot.webwxapi import WebWxAPI
 api = WebWxAPI()
 robot = WxRobot(api)
 
+#文本消息
 @api.textMsg
 @api.sourceFilter('腾讯新闻',beside=True)
 def FiltedTxtMsgHandler(message):
-    print('-> %s:%s'%(message.fromUserName,message.content))
+    print('-> %s:%s(%s)'%(message.fromUserName,message.content,message.msgId))
     reply = robot.turing(message)
-    print('[*] 自动回复：%s'%reply)
+    print('[*] 自动回复：%s'%reply.content)
     return reply
 
+#图片消息
+@api.imageMsg
+def ImgeMsgHandler(message):
+    print('-> %s给%s发了一张图片'%(message.fromUserName,message.toUserName))
+    robot.open(message.image)
 
+#位置消息
 @api.location
 def LocationMsgHandler(message):
-    print('%s给你发了一个位置：[我在%s]'%(message.fromUserName,message.location))
+    print('-> %s给你发了一个位置：[我在%s]'%(message.fromUserName,message.location))
+
+#语音消息
+@api.voiceMsg
+def VoiceMsgHandler(message):
+    print('-> %s给%s发了一段语音'%(message.fromUserName,message.toUserName))
+    robot.open(message.voice) #打开语音消息,linux下需要安装mpg123
+
+#小视频消息
+@api.videoMsg
+def VideoMsgHandler(message):
+    print('-> %s给%s发了一段小视频'%(message.fromUserName,message.toUserName))
+    robot.open(message.video) #打开视频消息,linux需要安装vlc
+
+#名片消息
+@api.recommend
+def recommendMsgHandler(message):
+    print('-> %s给%s发了一张名片'%(message.fromUserName,message.toUserName))
+    print(message.recommend)
+
+#撤回消息
+@api.revoke
+def revokeMsgHandler(message):
+    print('-> %s向%s撤回了一条消息(%s)'%(message.fromUserName,message.toUserName,message.msgId))
 
 @robot.onPhoneExit
 def onPhoneExit():
@@ -40,23 +70,11 @@ def onPhoneInteract():
     interactCount += 1
     print('[*] 你在手机上玩了%d次微信被我发现了'%interactCount)
 
-@robot.onMsgReceive
-def onMsgReceive():
-    pass
-
-@robot.command('test','test function')
-def test():
-    print('[*] test')
-
 @robot.command('->','send text msg:send [name] [msg]')
 def sendTextMsg(name,text):
     print(api.getUserId(name))
     api.sendTextMsg(name,text)
 
-@robot.onSyncError
-def onSyncError():
-    print('[*] 查找同步线路失败')
-    exit(0)
 
 if __name__ == '__main__':
     robot.start()
