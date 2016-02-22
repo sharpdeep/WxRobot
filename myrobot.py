@@ -14,11 +14,18 @@ from WxRobot.webwxapi import WebWxAPI
 api = WebWxAPI()
 robot = WxRobot(api)
 
+# msg = dict()
+
 #文本消息
 @api.textMsg
 @api.sourceFilter('腾讯新闻',beside=True)
 def FiltedTxtMsgHandler(message):
-    print('-> %s:%s(%s)'%(message.fromUserName,message.content,message.msgId))
+    if message.isBatch: #群消息
+        print('-> %s(%s):%s'%(message.fromMemberName,message.fromUserName,message.content))
+        return
+    else:
+        print('-> %s:%s'%(message.fromUserName,message.content))
+    # msg[message.msgId] = message.content
     reply = robot.turing(message)
     print('[*] 自动回复：%s'%reply.content)
     return reply
@@ -27,6 +34,7 @@ def FiltedTxtMsgHandler(message):
 @api.imageMsg
 def ImgeMsgHandler(message):
     print('-> %s给%s发了一张图片'%(message.fromUserName,message.toUserName))
+    print('[*] %s'%message.content)
     robot.open(message.image)
 
 #位置消息
@@ -56,6 +64,7 @@ def recommendMsgHandler(message):
 @api.revoke
 def revokeMsgHandler(message):
     print('-> %s向%s撤回了一条消息(%s)'%(message.fromUserName,message.toUserName,message.msgId))
+    # return '%s撤回了一条消息%s'%(message.fromMemberName,msg[message.revokeMsg])
 
 @robot.onPhoneExit
 def onPhoneExit():

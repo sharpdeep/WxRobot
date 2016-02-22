@@ -153,7 +153,6 @@ class WebWxAPI(object):
         self.User = dic['User']
         # synckey for synccheck
         self.synckey = '|'.join([str(keyVal['Key']) + '_' + str(keyVal['Val']) for keyVal in self.SyncKey['List']])
-
         return dic['BaseResponse']['Ret'] == 0
 
     def webwxstatusnotify(self):
@@ -192,16 +191,19 @@ class WebWxAPI(object):
 
         return True
 
-    def webwxgetbatchcontact(self):
+    def webwxgetbatchcontact(self,groupid):
+        if groupid[:2] != '@@':
+            return None
         url = self.base_uri + '/webwxbatchgetcontact?type=ex&r=%s&pass_ticket=%s' % (int(time.time()), self.pass_ticket)
         params = {
             'BaseRequest': self.BaseRequest,
             "Count": len(self.GroupList),
-            "List": [{"UserName": g['UserName'], "EncryChatRoomId": ""} for g in self.GroupList]
+            "List": [{"UserName": groupid, "EncryChatRoomId": ""}]
         }
         dic = self._post(url, params)
+        group = dic['ContactList'][0]
         # 群联系人(todo)
-        return True
+        return group
 
     def webwxsendtextmsg(self,text,to = 'filehelper'):
         url = self.base_uri + '/webwxsendmsg?pass_ticket=%s' % (self.pass_ticket)
@@ -376,6 +378,13 @@ class WebWxAPI(object):
             if member['UserName'] == id:
                 name = member['RemarkName'] if member['RemarkName'] else member['NickName']
                 return name
+        if id[:2] == '@@': #没加入通讯录的群
+            newGroup = self.webwxgetbatchcontact(id)
+            if not newGroup['RemarkName'] and not newGroup['NickName']:
+                return '未命名群'
+            self.GroupList.append(newGroup)
+            name = newGroup['RemarkName'] if newGroup['RemarkName'] else newGroup['NickName']
+            return name
         return name
 
     def getUserId(self,name):
@@ -443,13 +452,35 @@ class WebWxAPI(object):
 
         return dic['BaseResponse']['Ret'] == 0
 
+    def getBatchMemberRemarkName(self,groupid,memberid):
+        name = '陌生人'
+        for group in self.GroupList:
+            if group['UserName'] == groupid:
+                for member in group['MemberList']:
+                    if member['UserName'] == memberid:
+                        name = member['DisplayName'] if member['DisplayName'] else member['NickName']
+                        return name
+        new_group = self.webwxgetbatchcontact(groupid)
+        if new_group:
+            for member in new_group['MemberList']:
+                if member['UserName'] == memberid:
+                    name = member['DisplayName'] if member['DisplayName'] else member['NickName']
+                    return name
+        return name
+
     def _process_message(self, message):
         message['type'] = self.message_types_dict.get(message.pop('MsgType'), None)
+        message['FromUserId'] = message.get('FromUserName',None)
         message['FromUserName'] = self.getUserRemarkName(message.pop('FromUserName'))
-        message['FromUserId'] = self.getUserId(message['FromUserName'])
+        message['ToUserId'] = message.get('ToUserName',None)
         message['ToUserName'] = self.getUserRemarkName(message.pop('ToUserName'))
-        message['ToUserId'] = self.getUserId(message['ToUserName'])
         message['Content'] = message.pop('Content').replace('<br/>', '\n').replace('&lt;', '<').replace('&gt;', '>')
+
+        if message['FromUserId'][:2] == '@@': #群消息
+            fromMemberId = message['Content'].split(':')[0]
+            message['FromMemberId'] = fromMemberId
+            message['FromMemberName'] = self.getBatchMemberRemarkName(message['FromUserId'],fromMemberId)
+            message['Content'] = ''.join(message['Content'].split(':')[1:])
 
         if message['type'] == 'text' and message['Content'].find( #位置消息
                 'http://weixin.qq.com/cgi-bin/redirectforward?args=') != -1:

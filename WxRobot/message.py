@@ -25,6 +25,11 @@ class WeChatMessage(object):
         self.createTime = message.pop('CreateTime',0)
         self.content = message.pop('Content','')
         self.__dict__.update(message)
+        self.isBatch = False
+        if self.fromUserId[:2] == '@@':
+            self.isBatch = True
+            self.fromMemberId = message.pop('FromMemberId',None)
+            self.fromMemberName = message.pop('FromMemberName',None)
 
 @handle_for_type('text')
 class TextMessage(WeChatMessage):
