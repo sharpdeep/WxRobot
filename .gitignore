@@ -3,3 +3,5 @@
 *.pyc
 *.mp3
 *.mp4
+dist/
+wxrobot.egg-info/
