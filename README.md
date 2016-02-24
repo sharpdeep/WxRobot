@@ -1,55 +1,22 @@
 ﻿# WxRobot ![python](https://img.shields.io/badge/python-3.4-ff69b4.svg)
 面向个人账户的微信机器人框架
 
-##已实现功能：
-
-- **扫描二维码登陆获取联系人**
-
-![](./screenshot/1.png)
-
-- **清理好友(由于接口限制，可能会失败)**
-
-![](./screenshot/4.png)
-
-- **接收文本消息和位置消息**
-
-![](./screenshot/2.png)
-
-- **消息过滤(来源过滤，目标过滤，文本过滤)**
-如过滤腾讯新闻文本消息：
-```
-@api.textMsg
-@api.sourceFilter('腾讯新闻',beside=True)
-def FiltedTxtMsgHandler(message):
-    print('%s给%s发送了一个消息'%(message.fromUserName,message.toUserName))
-    print('-> %s:%s'%(message.fromUserName,message.content))
-```
-
-- **手机端互动/退出/消息接收回调接口**
-手机客户端互动回调：
-```
-@robot.onPhoneInteract
-def onPhoneInteract():
-    print('[*] 你在手机上玩了微信被我发现了')
-```
-
-![](./screenshot/3.png)
-
 
 ##Usage
 
-###普通用户
+###pip 安装
+```
+pip install wxrobot
+```
 
-1. 下载项目到本地(`git clone`或直接下载)
-2. 配置环境：
-    (1). 安装`python3.4`和`pip`
-    (2). 安装依赖包:`pip install -r requirement.txt`
-3. 运行：进入项目目录，`python myrobot.py`
+###setup.py 安装
+下载项目到本地；
+然后安装：
+```
+python setup.py install
+```
 
-
-###开发者
-
-接口用法参照`myrobot.py`
+接口使用方法参考`myrobot.py`，后续将会完善并发布文档。
 
 ##Credit
 
@@ -63,11 +30,13 @@ I used
 
 
 ##Todo
-- [ ] 添加更多类型消息接口
-- [ ] 自动回复
-- [ ] 小黄鸡或图灵机器人自动回复
-- [ ] 主动发送消息
+- [x] 添加更多类型消息接口
+- [x] 自动回复
+- [x] 小黄鸡或图灵机器人自动回复
+- [x] 主动发送消息
+- [ ] 发送图片
 - [ ] 用微信遥控电脑
+- [ ] 完善文档
 
 ##反馈
 
