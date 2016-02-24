@@ -248,26 +248,20 @@ class WebWxAPI(object):
     def webwxgetmsgimg(self,msgid):
         url = self.base_uri + '/webwxgetmsgimg?MsgID=%s&skey=%s' % (msgid, self.skey)
         data = self._get(url,byte_ret=True)
-        msgimg_path = os.path.join(os.getcwd(),'msgimg_' + msgid + '.jpg')
-        with open(msgimg_path,'wb') as f:
-            f.write(data)
-        return msgimg_path
+        return self._save_file(data,'msgimg_' + msgid + '.jpg')
+
 
     def webwxgetmsgvideo(self,msgid):
         url = self.base_uri + '/webwxgetvideo?msgid=%s&skey=%s' % (msgid, self.skey)
         data = self._get(url,byte_ret=True)
-        msgvideo_path = os.path.join(os.getcwd(),'msgvideo_'+msgid+'.mp4')
-        with open(msgvideo_path,'wb') as f:
-            f.write(data)
-        return msgvideo_path
+        return self._save_file(data,'msgvideo_'+msgid+'.mp4')
+
 
     def webwxgetmsgvoice(self,msgid):
         url = self.base_uri + '/webwxgetvoice?msgid=%s&skey=%s' % (msgid, self.skey)
         data = self._get(url,byte_ret=True)
-        msgvoice_path = os.path.join(os.getcwd(),'msgvoice_'+msgid+'.mp3')
-        with open(msgvoice_path,'wb') as f:
-            f.write(data)
-        return  msgvoice_path
+        return self._save_file(data,'msgvoice_'+msgid+'.mp3')
+
 
     def testsynccheck(self):
         syncHost = [
@@ -706,6 +700,33 @@ class WebWxAPI(object):
             pm = re.search('<{0}>([^<]+)</{0}>'.format(key), content)
             if pm: return pm.group(1)
         return '未知'
+
+    def _save_file(self,data,file_name):
+        file_type = file_name[:file_name.find('_')]
+        if file_type == 'msgimg':
+            path = self._mkdir(os.path.join(os.getcwd(),'images'))
+        elif file_type == 'msgvoice':
+            path = self._mkdir(os.path.join(os.getcwd(),'voices'))
+        elif file_type == 'msgvideo':
+            path = self._mkdir(os.path.join(os.getcwd(),'videos'))
+        elif file_type == 'icon':
+            path = self._mkdir(os.path.join(os.getcwd(),'icons'))
+        else:
+            path = self._mkdir(os.path.join(os.getcwd(),'tmp'))
+        path = os.path.join(path,file_name)
+        with open(path,'wb') as f:
+            f.write(data)
+        return path
+
+
+
+    def _mkdir(self,path):
+        if not os.path.exists(path):
+            self._mkdir(os.path.split(path)[0])
+            os.mkdir(path)
+        elif not os.path.isdir(path):
+            return False
+        return path
 
     def _safe_open(self,file_path):
         try:

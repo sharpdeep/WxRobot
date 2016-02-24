@@ -11,6 +11,7 @@ import sys
 from WxRobot.wxrobot import WxRobot
 from WxRobot.webwxapi import WebWxAPI
 
+
 api = WebWxAPI()
 robot = WxRobot(api)
 
