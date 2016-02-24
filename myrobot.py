@@ -28,7 +28,7 @@ def FiltedTxtMsgHandler(message):
     # msg[message.msgId] = message.content
     reply = robot.turing(message)
     print('[*] 自动回复：%s'%reply.content)
-    return reply
+    return '自动回复',reply
 
 #图片消息
 @api.imageMsg

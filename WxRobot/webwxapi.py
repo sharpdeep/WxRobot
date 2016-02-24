@@ -494,7 +494,10 @@ class WebWxAPI(object):
         return message_type(self,message)
 
     def _process_reply(self,reply,message):
-        if isinstance(reply,str):
+        if isinstance(reply,tuple):
+            for r in reply:
+                self._process_reply(r,message)
+        elif isinstance(reply,str):
             self.sendTextMsg(message.fromUserName,reply)
         elif isinstance(reply,WeChatReply):
             if isinstance(reply,TextReply): #文本回复
