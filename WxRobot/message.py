@@ -12,6 +12,7 @@ MESSAGE_TYPES = {}
 def handle_for_type(type):
     def register(cls):
         MESSAGE_TYPES[type] = cls
+        cls.type = type
         return cls
     return register
 

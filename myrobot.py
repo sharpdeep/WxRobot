@@ -31,6 +31,7 @@ def FiltedTxtMsgHandler(message):
     print('[*] 自动回复：%s'%reply.content)
     return '自动回复',reply
 
+
 #图片消息
 @api.imageMsg
 def ImgeMsgHandler(message):

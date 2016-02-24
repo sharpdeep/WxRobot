@@ -583,6 +583,10 @@ class WebWxAPI(object):
             else:
                 raise TypeError("%s is not a valid target_content" % target_content)
 
+    def allMsg(self,func):
+        self.add_handler(func)
+        return func
+
     def textMsg(self, func):
         self.add_handler(func, type='text')
         return func
