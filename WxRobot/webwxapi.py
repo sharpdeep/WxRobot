@@ -77,6 +77,8 @@ class WebWxAPI(object):
         self._filters = dict()
 
         opener = request.build_opener(request.HTTPCookieProcessor(CookieJar()))
+        opener.addheaders = [('User-agent', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/48.0.2564.109 Safari/537.36'),
+                             ('Referer','https://wx2.qq.com/')]
         request.install_opener(opener)
 
     def getUUID(self):
