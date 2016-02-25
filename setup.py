@@ -39,7 +39,7 @@ AUTHOR_EMAIL = "cairuishen@gmail.com"
 
 URL = "https://github.com/sharpdeep/WxRobot"
 
-VERSION = "0.12"
+VERSION = "0.13"
 
 LICENSE = "MIT"
 

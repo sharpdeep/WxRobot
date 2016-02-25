@@ -1,6 +1,9 @@
 ﻿# WxRobot ![python](https://img.shields.io/badge/python-3.4-ff69b4.svg)
 面向个人账户的微信机器人框架
 
+文档在此：
+
+https://sharpdeep.gitbooks.io/wxrobot-document/content/
 
 ##Usage
 
@@ -16,7 +19,7 @@ pip install wxrobot
 python setup.py install
 ```
 
-接口使用方法参考`myrobot.py`，后续将会完善并发布文档。
+接口使用方法参考`myrobot.py`，详细接口请查看文档。
 
 ##Credit
 
@@ -36,7 +39,7 @@ I used
 - [x] 主动发送消息
 - [ ] 发送图片
 - [ ] 用微信遥控电脑
-- [ ] 完善文档
+- [x] 完善文档
 
 ##反馈
 
