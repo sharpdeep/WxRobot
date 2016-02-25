@@ -15,7 +15,7 @@ from WxRobot.webwxapi import WebWxAPI
 api = WebWxAPI()
 robot = WxRobot(api)
 
-# msg = dict()
+robot.active_turing('')
 
 #文本消息
 @api.textMsg
@@ -26,10 +26,9 @@ def FiltedTxtMsgHandler(message):
         return
     else:
         print('-> %s:%s'%(message.fromUserName,message.content))
-    # msg[message.msgId] = message.content
     reply = robot.turing(message)
     print('[*] 自动回复：%s'%reply.content)
-    return '自动回复',reply
+    return reply
 
 
 #图片消息

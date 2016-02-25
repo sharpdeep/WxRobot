@@ -273,13 +273,18 @@ class WxRobot(object):
         else:
             raise ValueError('the file format is wrong')
 
+    def active_turing(self,turing_key = ''):
+        self.turing_key = turing_key
+
+    def active_simsimi(self,simsimi_key = ''):
+        self.simsimi_key = simsimi_key
 
     #http://developer.simsimi.com/
     def simsimi(self,message): #只有免费7天,不推荐
         if message.type != 'text':
            raise ValueError('auto reply request text message')
         text = message.content
-        key = ''
+        key = self.simsimi_key
         url = url = 'http://sandbox.api.simsimi.com/request.p?key=%s&lc=ch&ft=0.0&text=%s' % (key, text)
         response = requests.get(url)
         data = response.json()
@@ -292,7 +297,7 @@ class WxRobot(object):
            raise ValueError('auto reply request text message')
         text = message.content
         userid = message.fromUserId
-        key = ''
+        key = self.turing_key
         url = 'http://www.tuling123.com/openapi/api?key=%s&info=%s&userid=%s'%(key,text,userid)
         response = requests.get(url)
         data = response.json()
